@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Filter elements
   const namingRadios = document.querySelectorAll('input[name="namingMethod"]');
+  const pathLevelSelect = document.getElementById('pathLevel');
+  const originalOptions = document.getElementById('originalOptions');
 
   let files = [];
 
@@ -56,7 +58,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.delayTime) delayTimeInput.value = result.delayTime;
     if (result.namingMethod) {
       const radio = document.querySelector(`input[name="namingMethod"][value="${result.namingMethod}"]`);
-      if (radio) radio.checked = true;
+      if (radio) {
+        radio.checked = true;
+        if (result.namingMethod === 'original') {
+          originalOptions.classList.remove('hidden');
+        }
+      }
+    }
+    if (result.pathLevel) {
+      pathLevelSelect.value = result.pathLevel;
     }
     // Restore settings visibility
     if (result.settingsVisible) {
@@ -161,19 +171,58 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = e.target.value;
       chrome.storage.local.set({ namingMethod: method });
       
-      // Update names in current list if any
-      if (files.length > 0) {
-        files.forEach(file => {
-          if (method === 'original') {
-            file.name = file.originalName || file.name;
-          } else {
-            file.name = file.detectedName || file.name;
-          }
-        });
-        renderFileList();
+      if (method === 'original') {
+        originalOptions.classList.remove('hidden');
+      } else {
+        originalOptions.classList.add('hidden');
       }
+
+      updateFileNames();
     });
   });
+
+  pathLevelSelect.addEventListener('change', () => {
+    chrome.storage.local.set({ pathLevel: pathLevelSelect.value });
+    updateFileNames();
+  });
+
+  function updateFileNames() {
+    if (files.length === 0) return;
+
+    const method = document.querySelector('input[name="namingMethod"]:checked').value;
+    const level = parseInt(pathLevelSelect.value) || 0;
+
+    files.forEach(file => {
+      if (method === 'original') {
+        file.name = getOriginalNameWithLevel(file.url, level);
+      } else {
+        file.name = file.detectedName || file.name;
+      }
+    });
+    renderFileList();
+  }
+
+  function getOriginalNameWithLevel(url, level) {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      // Decode and split path
+      const parts = decodeURIComponent(pathname).split('/').filter(p => p.length > 0);
+      
+      if (parts.length === 0) return 'download';
+
+      // Get the last (level + 1) parts
+      const count = level + 1;
+      const selectedParts = parts.slice(-count);
+      
+      let name = selectedParts.join('_');
+      // Sanitize
+      name = name.replace(/[<>:"/\\|?*]/g, '_');
+      return name;
+    } catch (e) {
+      return 'download';
+    }
+  }
 
   // Scan for files
   scanBtn.addEventListener('click', async () => {
@@ -243,14 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
       files = response.files;
       
       // Apply current naming preference
-      const currentMethod = document.querySelector('input[name="namingMethod"]:checked').value;
-      files.forEach(file => {
-        if (currentMethod === 'original') {
-          file.name = file.originalName || file.name;
-        } else {
-          file.name = file.detectedName || file.name;
-        }
-      });
+      updateFileNames();
 
       renderFileList();
     }

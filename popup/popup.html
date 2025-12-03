@@ -34,9 +34,20 @@
       </div>
       <div class="setting-group">
         <label>File Naming:</label>
-        <div class="radio-group">
-          <label><input type="radio" name="namingMethod" value="detected" checked> Auto-detect</label>
-          <label><input type="radio" name="namingMethod" value="original"> Original</label>
+        <div class="naming-controls">
+          <div class="radio-group">
+            <label><input type="radio" name="namingMethod" value="detected" checked> Auto-detect</label>
+            <label><input type="radio" name="namingMethod" value="original"> Original</label>
+          </div>
+          <div id="originalOptions" class="sub-option hidden">
+            <label for="pathLevel">Path Levels:</label>
+            <select id="pathLevel">
+              <option value="0">File Name Only</option>
+              <option value="1">1 Level Up</option>
+              <option value="2">2 Levels Up</option>
+              <option value="3">3 Levels Up</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="setting-group">
