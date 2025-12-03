@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniFetch</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>OmniFetch</h1>
+    </header>
+
+    <div class="settings">
+      <div class="setting-group">
+        <label for="folderName">Download Folder:</label>
+        <input type="text" id="folderName" placeholder="Domain name (default)">
+      </div>
+      <div class="setting-group">
+        <label for="delayTime">Delay (ms):</label>
+        <input type="number" id="delayTime" value="10" min="0">
+      </div>
+    </div>
+
+    <div class="filters" id="preFilterSection">
+      <label>Target File Types:</label>
+      <div class="type-checkboxes">
+        <label><input type="checkbox" value="docs" checked> Docs</label>
+        <label><input type="checkbox" value="imgs" checked> Images</label>
+        <label><input type="checkbox" value="video" checked> Video</label>
+        <label><input type="checkbox" value="audio" checked> Audio</label>
+        <label><input type="checkbox" value="archives" checked> Archives</label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="scanBtn" class="primary">Scan for Files</button>
+      <button id="downloadBtn" class="success" disabled>Download Selected</button>
+    </div>
+
+    <div class="file-list-container">
+      <div class="list-header">
+        <label><input type="checkbox" id="selectAll" checked> Select All</label>
+        <span id="fileCount">0 files found</span>
+      </div>
+      <ul id="fileList">
+        <!-- File items will be injected here -->
+      </ul>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>
