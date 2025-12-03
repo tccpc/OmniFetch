@@ -37,12 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     audio: '音频',
     archives: '压缩包'
   };
+  const FILTER_STORAGE_KEY = 'selectedFilters';
+  const FILTER_CATEGORY_KEY = 'activeFilterCategory';
   const selectedFilters = Object.keys(EXTENSIONS).reduce((acc, key) => {
     acc[key] = new Set();
     return acc;
   }, {});
   let activeCategory = 'docs';
-  selectedFilters.docs = new Set(EXTENSIONS.docs);
 
   // Load settings
   chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible'], (result) => {
@@ -74,9 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({ delayTime: delayTimeInput.value });
   });
 
-  initCategoryMenu();
-  renderFormatMenu(activeCategory);
-  renderSelectedFilters();
+  restoreFilters(() => {
+    initCategoryMenu();
+    renderFormatMenu(activeCategory);
+    renderSelectedFilters();
+  });
   setupDropdownInteractions();
 
   // Handle naming method change
@@ -270,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     renderFormatMenu(value);
     closeDropdown(categoryDropdown);
+    persistFilterState();
   }
 
   function renderFormatMenu(category) {
@@ -322,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedFilters[activeCategory] = new Set(selection);
     updateFormatToggleLabel(activeCategory);
     renderSelectedFilters();
+    persistFilterState();
   }
 
   function ensureSelection(category) {
@@ -373,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
           renderFormatMenu(activeCategory);
         }
         renderSelectedFilters();
+        persistFilterState();
       });
       pill.appendChild(title);
       pill.appendChild(detail);
@@ -428,6 +434,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeDropdown(target) {
     target.classList.remove('open');
+  }
+
+  function persistFilterState() {
+    const serialized = Object.entries(selectedFilters).reduce((acc, [category, set]) => {
+      acc[category] = Array.from(set);
+      return acc;
+    }, {});
+
+    chrome.storage.local.set({
+      [FILTER_STORAGE_KEY]: serialized,
+      [FILTER_CATEGORY_KEY]: activeCategory
+    });
+  }
+
+  function restoreFilters(callback) {
+    chrome.storage.local.get([FILTER_STORAGE_KEY, FILTER_CATEGORY_KEY], (result) => {
+      const storedSelections = result[FILTER_STORAGE_KEY];
+      const hasStoredSelections = !!storedSelections;
+
+      if (hasStoredSelections) {
+        Object.entries(storedSelections).forEach(([category, values]) => {
+          if (!EXTENSIONS[category]) return;
+          const validValues = Array.isArray(values) ? values.filter(ext => EXTENSIONS[category].includes(ext)) : [];
+          selectedFilters[category] = new Set(validValues);
+        });
+      }
+
+      Object.keys(EXTENSIONS).forEach(category => {
+        if (!selectedFilters[category] || !(selectedFilters[category] instanceof Set)) {
+          selectedFilters[category] = new Set();
+        }
+      });
+
+      const storedCategory = result[FILTER_CATEGORY_KEY];
+      if (storedCategory && CATEGORY_LABELS[storedCategory]) {
+        activeCategory = storedCategory;
+      }
+
+      const hasAnySelection = Object.values(selectedFilters).some(set => set.size > 0);
+      if (!hasStoredSelections || !hasAnySelection) {
+        selectedFilters.docs = new Set(EXTENSIONS.docs);
+        activeCategory = 'docs';
+      }
+
+      if (typeof callback === 'function') {
+        callback();
+      }
+    });
   }
 
 });
