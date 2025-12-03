@@ -6,9 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectAll = document.getElementById('selectAll');
   const folderNameInput = document.getElementById('folderName');
   const delayTimeInput = document.getElementById('delayTime');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsSection = document.getElementById('settingsSection');
   
   // Filter elements
   const typeCheckboxes = document.querySelectorAll('.type-checkboxes input');
+  const namingRadios = document.querySelectorAll('input[name="namingMethod"]');
 
   let files = [];
 
@@ -22,9 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Load settings
-  chrome.storage.local.get(['folderName', 'delayTime'], (result) => {
+  chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible'], (result) => {
     if (result.folderName) folderNameInput.value = result.folderName;
     if (result.delayTime) delayTimeInput.value = result.delayTime;
+    if (result.namingMethod) {
+      const radio = document.querySelector(`input[name="namingMethod"][value="${result.namingMethod}"]`);
+      if (radio) radio.checked = true;
+    }
+    // Restore settings visibility
+    if (result.settingsVisible) {
+      settingsSection.classList.remove('hidden');
+    }
+  });
+
+  // Toggle Settings
+  settingsToggle.addEventListener('click', () => {
+    settingsSection.classList.toggle('hidden');
+    const isVisible = !settingsSection.classList.contains('hidden');
+    chrome.storage.local.set({ settingsVisible: isVisible });
   });
 
   // Save settings on change
@@ -34,6 +52,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   delayTimeInput.addEventListener('change', () => {
     chrome.storage.local.set({ delayTime: delayTimeInput.value });
+  });
+
+  // Handle naming method change
+  namingRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const method = e.target.value;
+      chrome.storage.local.set({ namingMethod: method });
+      
+      // Update names in current list if any
+      if (files.length > 0) {
+        files.forEach(file => {
+          if (method === 'original') {
+            file.name = file.originalName || file.name;
+          } else {
+            file.name = file.detectedName || file.name;
+          }
+        });
+        renderFileList();
+      }
+    });
   });
 
   // Scan for files
@@ -84,11 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
              // Try sending message again after injection
              setTimeout(() => {
                chrome.tabs.sendMessage(tab.id, { action: 'scanFiles', extensions: selectedExtensions }, (res) => {
-                 if (res && res.files) {
-                   files = res.files;
-                   renderFileList();
-                   // updateCount(); // Removed as renderFileList now updates count
-                 }
+                 handleScanResponse(res);
                  scanBtn.textContent = originalText;
                  scanBtn.disabled = false;
                });
@@ -97,11 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        if (response && response.files) {
-          files = response.files;
-          renderFileList();
-          // updateCount(); // Removed as renderFileList now updates count
-        }
+        handleScanResponse(response);
         scanBtn.textContent = originalText;
         scanBtn.disabled = false;
       });
@@ -111,6 +141,24 @@ document.addEventListener('DOMContentLoaded', () => {
       scanBtn.disabled = false;
     }
   });
+
+  function handleScanResponse(response) {
+    if (response && response.files) {
+      files = response.files;
+      
+      // Apply current naming preference
+      const currentMethod = document.querySelector('input[name="namingMethod"]:checked').value;
+      files.forEach(file => {
+        if (currentMethod === 'original') {
+          file.name = file.originalName || file.name;
+        } else {
+          file.name = file.detectedName || file.name;
+        }
+      });
+
+      renderFileList();
+    }
+  }
 
   // Render file list
   function renderFileList() {

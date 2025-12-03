@@ -1,4 +1,4 @@
-console.log("PDF Batch Downloader content script loaded.");
+console.log("OmniFetch content script loaded.");
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scanFiles') {
@@ -49,32 +49,39 @@ function scanPageForFiles(customExtensions) {
     if (isFile && !seenUrls.has(href)) {
       seenUrls.add(href);
       
-      // Determine filename
-      let name = '';
+      // 1. Calculate Original Filename (from URL)
+      let originalName = decodeURIComponent(pathname.split('/').pop());
+      
+      // 2. Calculate Detected Name (from text/attributes)
+      let detectedName = '';
       if (type === 'anchor') {
-        name = element.innerText.trim();
+        detectedName = element.innerText.trim();
       } else if (element.alt) {
-        name = element.alt.trim();
+        detectedName = element.alt.trim();
       } else if (element.title) {
-        name = element.title.trim();
+        detectedName = element.title.trim();
       }
 
-      if (!name) {
-        name = decodeURIComponent(pathname.split('/').pop());
+      // Fallback for detected name if empty
+      if (!detectedName) {
+        detectedName = originalName;
       } else {
-        // Ensure extension is present in name
+        // Ensure extension is present in detected name
         const ext = pathname.split('.').pop();
-        if (!name.toLowerCase().endsWith('.' + ext)) {
-          name += '.' + ext;
+        if (!detectedName.toLowerCase().endsWith('.' + ext)) {
+          detectedName += '.' + ext;
         }
       }
 
-      // Sanitize filename
-      name = name.replace(/[<>:"/\\|?*]/g, '_');
+      // Sanitize filenames
+      originalName = originalName.replace(/[<>:"/\\|?*]/g, '_');
+      detectedName = detectedName.replace(/[<>:"/\\|?*]/g, '_');
 
       files.push({
         url: href,
-        name: name
+        name: detectedName, // Default to detected name for backward compatibility/initial render
+        originalName: originalName,
+        detectedName: detectedName
       });
     }
   };

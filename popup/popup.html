@@ -12,9 +12,18 @@
   <div class="container">
     <header>
       <h1>OmniFetch</h1>
+      <button id="settingsToggle" class="icon-btn" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
     </header>
 
-    <div class="settings">
+    <div class="settings hidden" id="settingsSection">
       <div class="setting-group">
         <label for="folderName">Download Folder:</label>
         <input type="text" id="folderName" placeholder="Domain name (default)">
@@ -23,16 +32,23 @@
         <label for="delayTime">Delay (ms):</label>
         <input type="number" id="delayTime" value="10" min="0">
       </div>
+      <div class="setting-group">
+        <label>File Naming:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="namingMethod" value="detected" checked> Auto-detect</label>
+          <label><input type="radio" name="namingMethod" value="original"> Original</label>
+        </div>
+      </div>
     </div>
 
     <div class="filters" id="preFilterSection">
       <label>Target File Types:</label>
       <div class="type-checkboxes">
         <label><input type="checkbox" value="docs" checked> Docs</label>
-        <label><input type="checkbox" value="imgs" checked> Images</label>
-        <label><input type="checkbox" value="video" checked> Video</label>
-        <label><input type="checkbox" value="audio" checked> Audio</label>
-        <label><input type="checkbox" value="archives" checked> Archives</label>
+        <label><input type="checkbox" value="imgs"> Images</label>
+        <label><input type="checkbox" value="video"> Video</label>
+        <label><input type="checkbox" value="audio"> Audio</label>
+        <label><input type="checkbox" value="archives"> Archives</label>
       </div>
     </div>
 
