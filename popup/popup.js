@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const namingRadios = document.querySelectorAll('input[name="namingMethod"]');
   const pathLevelSelect = document.getElementById('pathLevel');
   const originalOptions = document.getElementById('originalOptions');
+  const langToggle = document.getElementById('langToggle');
+  const langText = langToggle.querySelector('.lang-text');
 
   let files = [];
 
@@ -37,13 +39,86 @@ document.addEventListener('DOMContentLoaded', () => {
     video: ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv', '.wmv'],
     audio: ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac']
   };
-  const CATEGORY_LABELS = {
-    docs: '文档',
-    imgs: '图片',
-    video: '视频',
-    audio: '音频',
-    archives: '压缩包'
+  const TRANSLATIONS = {
+    en: {
+      settings: 'Settings',
+      downloadFolder: 'Download Folder:',
+      folderPlaceholder: 'Domain name (default)',
+      delay: 'Delay (ms):',
+      fileNaming: 'File Naming:',
+      autoDetect: 'Auto-detect',
+      original: 'Original',
+      pathLevels: 'Path Levels:',
+      fileNameOnly: 'File Name Only',
+      levelUp1: '1 Level Up',
+      levelUp2: '2 Levels Up',
+      levelUp3: '3 Levels Up',
+      searchScope: 'Search Scope:',
+      selectScope: 'Select Scope',
+      currentScope: 'Current Scope:',
+      wholePage: 'Whole Page',
+      clearScope: 'Clear Scope',
+      filterFormat: 'Filter Format',
+      docs: 'Docs',
+      imgs: 'Images',
+      video: 'Video',
+      audio: 'Audio',
+      archives: 'Archives',
+      allFormats: 'All Formats',
+      scanFiles: 'Scan for Files',
+      scanning: 'Scanning...',
+      downloadSelected: 'Download Selected',
+      selectAll: 'Select All',
+      filesFound: 'files found',
+      noFilter: 'No filter selected',
+      alertSelectFormat: 'Please select at least one file format.',
+      unselected: 'Unselected',
+      selectedStart: '',
+      selectedEnd: ' selected',
+      plusMore: ' +{count} more',
+      lang: 'EN'
+    },
+    zh: {
+      settings: '设置',
+      downloadFolder: '下载文件夹:',
+      folderPlaceholder: '域名 (默认)',
+      delay: '延迟 (毫秒):',
+      fileNaming: '文件命名:',
+      autoDetect: '自动检测',
+      original: '原始文件名',
+      pathLevels: '路径层级:',
+      fileNameOnly: '仅文件名',
+      levelUp1: '1级上层路径',
+      levelUp2: '2级上层路径',
+      levelUp3: '3级上层路径',
+      searchScope: '搜索范围:',
+      selectScope: '选择范围',
+      currentScope: '当前范围:',
+      wholePage: '整个页面',
+      clearScope: '清除范围',
+      filterFormat: '筛选格式',
+      docs: '文档',
+      imgs: '图片',
+      video: '视频',
+      audio: '音频',
+      archives: '压缩包',
+      allFormats: '全部格式',
+      scanFiles: '扫描文件',
+      scanning: '扫描中...',
+      downloadSelected: '下载选中文件',
+      selectAll: '全选',
+      filesFound: '个文件已找到',
+      noFilter: '未选择筛选条件',
+      alertSelectFormat: '请至少选择一种文件格式。',
+      unselected: '未选择',
+      selectedStart: '已选择 ',
+      selectedEnd: ' 项',
+      plusMore: ' +{count} 更多',
+      lang: '中'
+    }
   };
+
+  let currentLang = 'en'; // Default language
   const FILTER_STORAGE_KEY = 'selectedFilters';
   const FILTER_CATEGORY_KEY = 'activeFilterCategory';
   const selectedFilters = Object.keys(EXTENSIONS).reduce((acc, key) => {
@@ -53,7 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeCategory = 'docs';
 
   // Load settings
-  chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible', 'searchScope', 'searchScopeDisplay', 'searchScopeUrl'], async (result) => {
+  chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible', 'searchScope', 'searchScopeDisplay', 'searchScopeUrl', 'language'], async (result) => {
+    if (result.language) {
+      currentLang = result.language;
+    }
+    setLanguage(currentLang);
+
     if (result.folderName) folderNameInput.value = result.folderName;
     if (result.delayTime) delayTimeInput.value = result.delayTime;
     if (result.namingMethod) {
@@ -86,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
           scopeSelector.textContent = result.searchScopeDisplay;
         } else {
           // 不同网站,清空范围设置
-          scopeSelector.textContent = '整个页面';
+          scopeSelector.textContent = TRANSLATIONS[currentLang].wholePage;
           chrome.storage.local.set({ 
             searchScope: null,
             searchScopeDisplay: null,
@@ -103,6 +183,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const isVisible = !settingsSection.classList.contains('hidden');
     chrome.storage.local.set({ settingsVisible: isVisible });
   });
+
+  // Toggle Language
+  langToggle.addEventListener('click', () => {
+    currentLang = currentLang === 'en' ? 'zh' : 'en';
+    setLanguage(currentLang);
+    chrome.storage.local.set({ language: currentLang });
+  });
+
+  function setLanguage(lang) {
+    const t = TRANSLATIONS[lang];
+    langText.textContent = t.lang;
+    
+    // Update static text
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+
+    // Update placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (t[key]) el.placeholder = t[key];
+    });
+
+    // Re-render dynamic components
+    initCategoryMenu();
+    renderFormatMenu(activeCategory);
+    renderSelectedFilters();
+    updateFileNames(); // In case naming options need update (though they are static mostly)
+    
+    // Update button states if needed
+    if (scanBtn.disabled) {
+       // If scanning, keep scanning text? Or reset? 
+       // Actually scanBtn text is set manually during scan.
+       // If not scanning:
+       if (scanBtn.textContent !== 'Scanning...' && scanBtn.textContent !== '扫描中...') {
+         scanBtn.textContent = t.scanFiles;
+       }
+    } else {
+       scanBtn.textContent = t.scanFiles;
+    }
+
+    // Update file count text
+    if (files.length > 0) {
+      fileCount.textContent = `${files.length} ${t.filesFound}`;
+    } else {
+      fileCount.textContent = `0 ${t.filesFound}`;
+    }
+
+    // Update scope selector text only if no scope is selected
+    chrome.storage.local.get(['searchScope'], (result) => {
+      if (!result.searchScope) {
+        scopeSelector.textContent = t.wholePage;
+      }
+    });
+  }
 
   // Save settings on change
   folderNameInput.addEventListener('change', () => {
@@ -147,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       searchScopeDisplay: null,
       searchScopeUrl: null  // 同时清除URL
     }, () => {
-      scopeSelector.textContent = '整个页面';
+      scopeSelector.textContent = TRANSLATIONS[currentLang].wholePage;
     });
   });
 
@@ -226,15 +362,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Scan for files
   scanBtn.addEventListener('click', async () => {
-    const originalText = scanBtn.textContent;
-    scanBtn.textContent = 'Scanning...';
+    const originalText = TRANSLATIONS[currentLang].scanFiles;
+    scanBtn.textContent = TRANSLATIONS[currentLang].scanning;
     scanBtn.disabled = true;
 
     // Get selected extensions
     const selectedExtensions = collectSelectedExtensions();
 
     if (selectedExtensions.length === 0) {
-      alert("请至少选择一种文件格式。");
+      alert(TRANSLATIONS[currentLang].alertSelectFormat);
       scanBtn.textContent = originalText;
       scanBtn.disabled = false;
       return;
@@ -316,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fileList.appendChild(li);
     });
     
-    fileCount.textContent = `${files.length} files found`;
+    fileCount.textContent = `${files.length} ${TRANSLATIONS[currentLang].filesFound}`;
     downloadBtn.disabled = files.length === 0;
     
     // Add event listeners for new elements
@@ -369,9 +505,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initCategoryMenu() {
     categoryMenu.innerHTML = '';
-    Object.entries(CATEGORY_LABELS).forEach(([value, label]) => {
+    Object.keys(EXTENSIONS).forEach(value => {
       const li = document.createElement('li');
-      li.textContent = label;
+      li.textContent = TRANSLATIONS[currentLang][value];
       li.dataset.value = value;
       if (value === activeCategory) li.classList.add('active');
       li.addEventListener('click', () => selectCategory(value));
@@ -396,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formatMenu.innerHTML = '';
 
     const allLabel = document.createElement('label');
-    allLabel.innerHTML = `<input type="checkbox" data-role="all"> 全部格式`;
+    allLabel.innerHTML = `<input type="checkbox" data-role="all"> ${TRANSLATIONS[currentLang].allFormats}`;
     const allInput = allLabel.querySelector('input');
     allInput.checked = selection.size === EXTENSIONS[category].length;
     allLabel.addEventListener('click', (e) => e.stopPropagation());
@@ -452,37 +588,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateCategoryToggle() {
-    categoryToggle.textContent = CATEGORY_LABELS[activeCategory];
+    categoryToggle.textContent = TRANSLATIONS[currentLang][activeCategory];
   }
 
   function updateFormatToggleLabel(category) {
     const selection = ensureSelection(category);
     if (selection.size === 0) {
-      formatToggle.textContent = '未选择';
+      formatToggle.textContent = TRANSLATIONS[currentLang].unselected;
       return;
     }
     if (selection.size === EXTENSIONS[category].length) {
-      formatToggle.textContent = '全部格式';
+      formatToggle.textContent = TRANSLATIONS[currentLang].allFormats;
       return;
     }
     const items = Array.from(selection);
-    formatToggle.textContent = items.length > 2 ? `${items.slice(0, 2).join(', ')} +${items.length - 2}` : items.join(', ');
+    formatToggle.textContent = items.length > 2 ? `${items.slice(0, 2).join(', ')} ${TRANSLATIONS[currentLang].plusMore.replace('{count}', items.length - 2)}` : items.join(', ');
   }
 
   function renderSelectedFilters() {
     selectedFiltersContainer.innerHTML = '';
     const entries = Object.entries(selectedFilters).filter(([_, set]) => set.size > 0);
     if (entries.length === 0) {
-      selectedFiltersContainer.innerHTML = '<span class="filter-empty">未选择筛选条件</span>';
+      selectedFiltersContainer.innerHTML = `<span class="filter-empty">${TRANSLATIONS[currentLang].noFilter}</span>`;
       return;
     }
     entries.forEach(([category, set]) => {
       const pill = document.createElement('div');
       pill.className = 'filter-pill';
       const title = document.createElement('strong');
-      title.textContent = CATEGORY_LABELS[category];
+      title.textContent = TRANSLATIONS[currentLang][category];
       const detail = document.createElement('span');
-      detail.textContent = set.size === EXTENSIONS[category].length ? '全部格式' : Array.from(set).join(', ');
+      detail.textContent = set.size === EXTENSIONS[category].length ? TRANSLATIONS[currentLang].allFormats : Array.from(set).join(', ');
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.textContent = '×';
@@ -583,7 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const storedCategory = result[FILTER_CATEGORY_KEY];
-      if (storedCategory && CATEGORY_LABELS[storedCategory]) {
+      if (storedCategory && EXTENSIONS[storedCategory]) {
         activeCategory = storedCategory;
       }
 

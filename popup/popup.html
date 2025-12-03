@@ -12,68 +12,76 @@
   <div class="container">
     <header>
       <h1>OmniFetch</h1>
-      <button id="settingsToggle" class="icon-btn" title="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-          </path>
-        </svg>
-      </button>
+      <div class="header-controls">
+        <button id="langToggle" class="icon-btn" title="Switch Language">
+          <span class="lang-text">EN</span>
+        </button>
+        <button id="settingsToggle" class="icon-btn" title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <div class="settings hidden" id="settingsSection">
       <div class="setting-group">
-        <label for="folderName">Download Folder:</label>
-        <input type="text" id="folderName" placeholder="Domain name (default)">
+        <label for="folderName" data-i18n="downloadFolder">Download Folder:</label>
+        <input type="text" id="folderName" placeholder="Domain name (default)"
+          data-i18n-placeholder="folderPlaceholder">
       </div>
       <div class="setting-group">
-        <label for="delayTime">Delay (ms):</label>
+        <label for="delayTime" data-i18n="delay">Delay (ms):</label>
         <input type="number" id="delayTime" value="10" min="0">
       </div>
       <div class="setting-group">
-        <label>File Naming:</label>
+        <label data-i18n="fileNaming">File Naming:</label>
         <div class="naming-controls">
           <div class="radio-group">
-            <label><input type="radio" name="namingMethod" value="detected" checked> Auto-detect</label>
-            <label><input type="radio" name="namingMethod" value="original"> Original</label>
+            <label><input type="radio" name="namingMethod" value="detected" checked> <span
+                data-i18n="autoDetect">Auto-detect</span></label>
+            <label><input type="radio" name="namingMethod" value="original"> <span
+                data-i18n="original">Original</span></label>
           </div>
           <div id="originalOptions" class="sub-option hidden">
-            <label for="pathLevel">Path Levels:</label>
+            <label for="pathLevel" data-i18n="pathLevels">Path Levels:</label>
             <select id="pathLevel">
-              <option value="0">File Name Only</option>
-              <option value="1">1 Level Up</option>
-              <option value="2">2 Levels Up</option>
-              <option value="3">3 Levels Up</option>
+              <option value="0" data-i18n="fileNameOnly">File Name Only</option>
+              <option value="1" data-i18n="levelUp1">1 Level Up</option>
+              <option value="2" data-i18n="levelUp2">2 Levels Up</option>
+              <option value="3" data-i18n="levelUp3">3 Levels Up</option>
             </select>
           </div>
         </div>
       </div>
       <div class="setting-group">
-        <label>搜索范围:</label>
-        <button id="selectScopeBtn" class="scope-btn" type="button">选择范围</button>
+        <label data-i18n="searchScope">Search Scope:</label>
+        <button id="selectScopeBtn" class="scope-btn" type="button" data-i18n="selectScope">Select Scope</button>
       </div>
       <div class="setting-group scope-display" id="scopeDisplay">
-        <label>当前范围:</label>
+        <label data-i18n="currentScope">Current Scope:</label>
         <div class="scope-info">
-          <span id="scopeSelector">整个页面</span>
-          <button id="clearScopeBtn" class="clear-scope-btn" type="button" title="清除范围">×</button>
+          <span id="scopeSelector">Whole Page</span>
+          <button id="clearScopeBtn" class="clear-scope-btn" type="button" title="Clear Scope">×</button>
         </div>
       </div>
     </div>
 
     <div class="filters" id="preFilterSection">
-      <label>筛选格式</label>
+      <label data-i18n="filterFormat">Filter Format</label>
       <div class="dual-dropdown">
         <div class="dropdown" id="categoryDropdown">
-          <button class="dropdown-toggle" id="categoryToggle" type="button">文档</button>
+          <button class="dropdown-toggle" id="categoryToggle" type="button" data-i18n="docs">Docs</button>
           <ul class="dropdown-menu" id="categoryMenu">
             <!-- categories injected by JS -->
           </ul>
         </div>
         <div class="dropdown wide" id="formatDropdown">
-          <button class="dropdown-toggle" id="formatToggle" type="button">全部格式</button>
+          <button class="dropdown-toggle" id="formatToggle" type="button" data-i18n="allFormats">All Formats</button>
           <div class="dropdown-menu format-menu" id="formatMenu">
             <!-- formats injected by JS -->
           </div>
@@ -85,13 +93,13 @@
     </div>
 
     <div class="actions">
-      <button id="scanBtn" class="primary">Scan for Files</button>
-      <button id="downloadBtn" class="success" disabled>Download Selected</button>
+      <button id="scanBtn" class="primary" data-i18n="scanFiles">Scan for Files</button>
+      <button id="downloadBtn" class="success" disabled data-i18n="downloadSelected">Download Selected</button>
     </div>
 
     <div class="file-list-container">
       <div class="list-header">
-        <label><input type="checkbox" id="selectAll" checked> Select All</label>
+        <label><input type="checkbox" id="selectAll" checked> <span data-i18n="selectAll">Select All</span></label>
         <span id="fileCount">0 files found</span>
       </div>
       <ul id="fileList">

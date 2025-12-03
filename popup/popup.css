@@ -48,6 +48,17 @@ header h1 {
   letter-spacing: -0.025em;
 }
 
+.header-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.lang-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+}
+
 .icon-btn {
   background: transparent;
   border: 1px solid var(--border-color);
