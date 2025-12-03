@@ -8,9 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const delayTimeInput = document.getElementById('delayTime');
   const settingsToggle = document.getElementById('settingsToggle');
   const settingsSection = document.getElementById('settingsSection');
+  const categoryDropdown = document.getElementById('categoryDropdown');
+  const categoryToggle = document.getElementById('categoryToggle');
+  const categoryMenu = document.getElementById('categoryMenu');
+  const formatDropdown = document.getElementById('formatDropdown');
+  const formatToggle = document.getElementById('formatToggle');
+  const formatMenu = document.getElementById('formatMenu');
+  const selectedFiltersContainer = document.getElementById('selectedFilters');
+  const preFilterSection = document.getElementById('preFilterSection');
   
   // Filter elements
-  const typeCheckboxes = document.querySelectorAll('.type-checkboxes input');
   const namingRadios = document.querySelectorAll('input[name="namingMethod"]');
 
   let files = [];
@@ -23,6 +30,19 @@ document.addEventListener('DOMContentLoaded', () => {
     video: ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv', '.wmv'],
     audio: ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac']
   };
+  const CATEGORY_LABELS = {
+    docs: '文档',
+    imgs: '图片',
+    video: '视频',
+    audio: '音频',
+    archives: '压缩包'
+  };
+  const selectedFilters = Object.keys(EXTENSIONS).reduce((acc, key) => {
+    acc[key] = new Set();
+    return acc;
+  }, {});
+  let activeCategory = 'docs';
+  selectedFilters.docs = new Set(EXTENSIONS.docs);
 
   // Load settings
   chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible'], (result) => {
@@ -54,6 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({ delayTime: delayTimeInput.value });
   });
 
+  initCategoryMenu();
+  renderFormatMenu(activeCategory);
+  renderSelectedFilters();
+  setupDropdownInteractions();
+
   // Handle naming method change
   namingRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
@@ -81,15 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     scanBtn.disabled = true;
 
     // Get selected extensions
-    let selectedExtensions = [];
-    typeCheckboxes.forEach(cb => {
-      if (cb.checked) {
-        selectedExtensions = selectedExtensions.concat(EXTENSIONS[cb.value]);
-      }
-    });
+    const selectedExtensions = collectSelectedExtensions();
 
     if (selectedExtensions.length === 0) {
-      alert("Please select at least one file type.");
+      alert("请至少选择一种文件格式。");
       scanBtn.textContent = originalText;
       scanBtn.disabled = false;
       return;
@@ -228,5 +248,186 @@ document.addEventListener('DOMContentLoaded', () => {
       delay: delay
     });
   });
+
+  function initCategoryMenu() {
+    categoryMenu.innerHTML = '';
+    Object.entries(CATEGORY_LABELS).forEach(([value, label]) => {
+      const li = document.createElement('li');
+      li.textContent = label;
+      li.dataset.value = value;
+      if (value === activeCategory) li.classList.add('active');
+      li.addEventListener('click', () => selectCategory(value));
+      categoryMenu.appendChild(li);
+    });
+    updateCategoryToggle();
+  }
+
+  function selectCategory(value) {
+    activeCategory = value;
+    updateCategoryToggle();
+    [...categoryMenu.children].forEach(li => {
+      li.classList.toggle('active', li.dataset.value === value);
+    });
+    renderFormatMenu(value);
+    closeDropdown(categoryDropdown);
+  }
+
+  function renderFormatMenu(category) {
+    const selection = ensureSelection(category);
+    formatMenu.innerHTML = '';
+
+    const allLabel = document.createElement('label');
+    allLabel.innerHTML = `<input type="checkbox" data-role="all"> 全部格式`;
+    const allInput = allLabel.querySelector('input');
+    allInput.checked = selection.size === EXTENSIONS[category].length;
+    allLabel.addEventListener('click', (e) => e.stopPropagation());
+    formatMenu.appendChild(allLabel);
+
+    EXTENSIONS[category].forEach(ext => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" value="${ext}"> ${ext}`;
+      const input = label.querySelector('input');
+      input.checked = selection.has(ext);
+      label.addEventListener('click', (e) => e.stopPropagation());
+      formatMenu.appendChild(label);
+    });
+
+    updateFormatToggleLabel(category);
+  }
+
+  formatMenu.addEventListener('change', (e) => {
+    if (e.target.tagName !== 'INPUT') return;
+    handleFormatChange(e.target);
+  });
+
+  function handleFormatChange(target) {
+    const selection = ensureSelection(activeCategory);
+    if (target.dataset.role === 'all') {
+      if (target.checked) {
+        EXTENSIONS[activeCategory].forEach(ext => selection.add(ext));
+        formatMenu.querySelectorAll('input[type="checkbox"]:not([data-role="all"])').forEach(cb => cb.checked = true);
+      } else {
+        selection.clear();
+        formatMenu.querySelectorAll('input[type="checkbox"]:not([data-role="all"])').forEach(cb => cb.checked = false);
+      }
+    } else {
+      if (target.checked) {
+        selection.add(target.value);
+      } else {
+        selection.delete(target.value);
+      }
+      const allCheckbox = formatMenu.querySelector('input[data-role="all"]');
+      allCheckbox.checked = selection.size === EXTENSIONS[activeCategory].length;
+    }
+    selectedFilters[activeCategory] = new Set(selection);
+    updateFormatToggleLabel(activeCategory);
+    renderSelectedFilters();
+  }
+
+  function ensureSelection(category) {
+    if (!selectedFilters[category]) {
+      selectedFilters[category] = new Set();
+    }
+    return selectedFilters[category];
+  }
+
+  function updateCategoryToggle() {
+    categoryToggle.textContent = CATEGORY_LABELS[activeCategory];
+  }
+
+  function updateFormatToggleLabel(category) {
+    const selection = ensureSelection(category);
+    if (selection.size === 0) {
+      formatToggle.textContent = '未选择';
+      return;
+    }
+    if (selection.size === EXTENSIONS[category].length) {
+      formatToggle.textContent = '全部格式';
+      return;
+    }
+    const items = Array.from(selection);
+    formatToggle.textContent = items.length > 2 ? `${items.slice(0, 2).join(', ')} +${items.length - 2}` : items.join(', ');
+  }
+
+  function renderSelectedFilters() {
+    selectedFiltersContainer.innerHTML = '';
+    const entries = Object.entries(selectedFilters).filter(([_, set]) => set.size > 0);
+    if (entries.length === 0) {
+      selectedFiltersContainer.innerHTML = '<span class="filter-empty">未选择筛选条件</span>';
+      return;
+    }
+    entries.forEach(([category, set]) => {
+      const pill = document.createElement('div');
+      pill.className = 'filter-pill';
+      const title = document.createElement('strong');
+      title.textContent = CATEGORY_LABELS[category];
+      const detail = document.createElement('span');
+      detail.textContent = set.size === EXTENSIONS[category].length ? '全部格式' : Array.from(set).join(', ');
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.dataset.category = category;
+      removeBtn.addEventListener('click', () => {
+        selectedFilters[category] = new Set();
+        if (category === activeCategory) {
+          renderFormatMenu(activeCategory);
+        }
+        renderSelectedFilters();
+      });
+      pill.appendChild(title);
+      pill.appendChild(detail);
+      pill.appendChild(removeBtn);
+      selectedFiltersContainer.appendChild(pill);
+    });
+  }
+
+  function collectSelectedExtensions() {
+    const aggregate = new Set();
+    Object.values(selectedFilters).forEach(set => {
+      if (!set || set.size === 0) return;
+      set.forEach(ext => aggregate.add(ext));
+    });
+    return Array.from(aggregate);
+  }
+
+  function setupDropdownInteractions() {
+    categoryToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDropdown(categoryDropdown);
+    });
+    formatToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDropdown(formatDropdown);
+    });
+    document.addEventListener('click', (event) => {
+      if (!preFilterSection.contains(event.target)) {
+        closeDropdowns();
+      }
+    });
+    preFilterSection.addEventListener('click', (event) => {
+      if (
+        event.target === preFilterSection ||
+        (!categoryDropdown.contains(event.target) && !formatDropdown.contains(event.target))
+      ) {
+        closeDropdowns();
+      }
+    });
+  }
+
+  function toggleDropdown(target) {
+    const isOpen = target.classList.contains('open');
+    closeDropdowns();
+    if (!isOpen) {
+      target.classList.add('open');
+    }
+  }
+
+  function closeDropdowns() {
+    [categoryDropdown, formatDropdown].forEach(dropdown => dropdown.classList.remove('open'));
+  }
+
+  function closeDropdown(target) {
+    target.classList.remove('open');
+  }
 
 });

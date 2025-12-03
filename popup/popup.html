@@ -42,13 +42,23 @@
     </div>
 
     <div class="filters" id="preFilterSection">
-      <label>Target File Types:</label>
-      <div class="type-checkboxes">
-        <label><input type="checkbox" value="docs" checked> Docs</label>
-        <label><input type="checkbox" value="imgs"> Images</label>
-        <label><input type="checkbox" value="video"> Video</label>
-        <label><input type="checkbox" value="audio"> Audio</label>
-        <label><input type="checkbox" value="archives"> Archives</label>
+      <label>筛选格式</label>
+      <div class="dual-dropdown">
+        <div class="dropdown" id="categoryDropdown">
+          <button class="dropdown-toggle" id="categoryToggle" type="button">文档</button>
+          <ul class="dropdown-menu" id="categoryMenu">
+            <!-- categories injected by JS -->
+          </ul>
+        </div>
+        <div class="dropdown wide" id="formatDropdown">
+          <button class="dropdown-toggle" id="formatToggle" type="button">全部格式</button>
+          <div class="dropdown-menu format-menu" id="formatMenu">
+            <!-- formats injected by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="selected-filters" id="selectedFilters">
+        <!-- dynamic filter pills -->
       </div>
     </div>
 
