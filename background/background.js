@@ -157,6 +157,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ sizes: sizes });
     });
     return true; // Keep channel open for async response
+  } else if (request.action === 'scopeSelected') {
+    // 转发消息到popup(如果popup打开的话)
+    chrome.runtime.sendMessage(request);
   }
 });
 

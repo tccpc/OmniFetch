@@ -165,6 +165,76 @@ header h1 {
   display: none;
 }
 
+/* Scope Selection */
+.scope-btn {
+  flex: none;
+  padding: 6px 12px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+.scope-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.scope-display {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.scope-display label {
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.scope-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 94%;
+  padding: 6px 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+#scopeSelector {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clear-scope-btn {
+  flex: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.clear-scope-btn:hover {
+  background: var(--border-color);
+  color: var(--danger-color);
+  transform: none;
+}
+
+
 /* Filters */
 .filters label {
   font-weight: 600;

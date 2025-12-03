@@ -39,6 +39,17 @@
           <label><input type="radio" name="namingMethod" value="original"> Original</label>
         </div>
       </div>
+      <div class="setting-group">
+        <label>搜索范围:</label>
+        <button id="selectScopeBtn" class="scope-btn" type="button">选择范围</button>
+      </div>
+      <div class="setting-group scope-display" id="scopeDisplay">
+        <label>当前范围:</label>
+        <div class="scope-info">
+          <span id="scopeSelector">整个页面</span>
+          <button id="clearScopeBtn" class="clear-scope-btn" type="button" title="清除范围">×</button>
+        </div>
+      </div>
     </div>
 
     <div class="filters" id="preFilterSection">

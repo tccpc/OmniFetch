@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectedFiltersContainer = document.getElementById('selectedFilters');
   const preFilterSection = document.getElementById('preFilterSection');
   
+  // Scope selection elements
+  const selectScopeBtn = document.getElementById('selectScopeBtn');
+  const clearScopeBtn = document.getElementById('clearScopeBtn');
+  const scopeSelector = document.getElementById('scopeSelector');
+  
   // Filter elements
   const namingRadios = document.querySelectorAll('input[name="namingMethod"]');
 
@@ -46,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeCategory = 'docs';
 
   // Load settings
-  chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible'], (result) => {
+  chrome.storage.local.get(['folderName', 'delayTime', 'namingMethod', 'settingsVisible', 'searchScope', 'searchScopeDisplay', 'searchScopeUrl'], async (result) => {
     if (result.folderName) folderNameInput.value = result.folderName;
     if (result.delayTime) delayTimeInput.value = result.delayTime;
     if (result.namingMethod) {
@@ -56,6 +61,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Restore settings visibility
     if (result.settingsVisible) {
       settingsSection.classList.remove('hidden');
+    }
+    
+    // 校验搜索范围是否适用于当前网站
+    if (result.searchScopeDisplay && result.searchScope) {
+      // 获取当前标签页的URL
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url) {
+        const currentUrl = new URL(tab.url);
+        const currentOrigin = currentUrl.origin;
+        
+        // 如果保存的URL与当前URL的origin相同,则恢复范围设置
+        if (result.searchScopeUrl === currentOrigin) {
+          scopeSelector.textContent = result.searchScopeDisplay;
+        } else {
+          // 不同网站,清空范围设置
+          scopeSelector.textContent = '整个页面';
+          chrome.storage.local.set({ 
+            searchScope: null,
+            searchScopeDisplay: null,
+            searchScopeUrl: null
+          });
+        }
+      }
     }
   });
 
@@ -73,6 +101,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   delayTimeInput.addEventListener('change', () => {
     chrome.storage.local.set({ delayTime: delayTimeInput.value });
+  });
+
+  // Scope selection handlers
+  selectScopeBtn.addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    // 发送消息到content script启动元素选择
+    chrome.tabs.sendMessage(tab.id, { action: 'startElementSelection' }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn("Could not start element selection:", chrome.runtime.lastError.message);
+        // 尝试注入脚本
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content/selector.js']
+        }, () => {
+          setTimeout(() => {
+            chrome.tabs.sendMessage(tab.id, { action: 'startElementSelection' }, (res) => {
+              if (chrome.runtime.lastError) {
+                console.error("Failed to start element selection after injection:", chrome.runtime.lastError.message);
+              }
+            });
+          }, 100);
+        });
+      }
+    });
+    
+    // 关闭popup(用户需要在页面上选择)
+    window.close();
+  });
+
+  clearScopeBtn.addEventListener('click', () => {
+    chrome.storage.local.set({ 
+      searchScope: null,
+      searchScopeDisplay: null,
+      searchScopeUrl: null  // 同时清除URL
+    }, () => {
+      scopeSelector.textContent = '整个页面';
+    });
+  });
+
+  // 监听来自background的范围选择消息
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'scopeSelected') {
+      scopeSelector.textContent = request.display || request.selector;
+    }
   });
 
   restoreFilters(() => {

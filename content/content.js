@@ -2,12 +2,16 @@ console.log("OmniFetch content script loaded.");
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scanFiles') {
-    const files = scanPageForFiles(request.extensions);
-    sendResponse({ files: files });
+    // 获取搜索范围设置
+    chrome.storage.local.get(['searchScope'], (result) => {
+      const files = scanPageForFiles(request.extensions, result.searchScope);
+      sendResponse({ files: files });
+    });
+    return true; // 保持消息通道开放以支持异步响应
   }
 });
 
-function scanPageForFiles(customExtensions) {
+function scanPageForFiles(customExtensions, scopeSelector) {
   const extensions = customExtensions || [
     // Documents
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv',
@@ -20,10 +24,24 @@ function scanPageForFiles(customExtensions) {
     // Audio
     '.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac'
   ];
+  
+  // 确定搜索范围
+  let searchRoot = document;
+  if (scopeSelector) {
+    try {
+      const scopeElement = document.querySelector(scopeSelector);
+      if (scopeElement) {
+        searchRoot = scopeElement;
+      }
+    } catch (e) {
+      console.warn('Invalid scope selector:', scopeSelector, e);
+    }
+  }
+  
   // Scan anchor tags
-  const links = Array.from(document.querySelectorAll('a'));
+  const links = Array.from(searchRoot.querySelectorAll('a'));
   // Scan media tags
-  const mediaElements = Array.from(document.querySelectorAll('img, video, audio, source'));
+  const mediaElements = Array.from(searchRoot.querySelectorAll('img, video, audio, source'));
 
   const files = [];
   const seenUrls = new Set();

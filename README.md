@@ -18,6 +18,7 @@ OmniFetch is a powerful browser extension designed to help users batch download 
   - Automatically identifies media resources in `<img>`, `<video>`, `<audio>` tags.
   - Smartly handles relative paths and full URLs.
 - **Flexible Configuration**:
+  - **Search Scope**: Select a specific DOM element on the page to limit the scan range (supports layer switching with arrow keys).
   - **File Filtering**: Filter files to download by type.
   - **Batch Management**: Preview the file list before downloading, support renaming and deleting unwanted files.
   - **Custom Directory**: Defaults to the current website domain as the folder name, supports custom modification.
@@ -41,10 +42,17 @@ OmniFetch is a powerful browser extension designed to help users batch download 
 2. **Start Extension**:
    - Click the OmniFetch icon in the browser toolbar.
    - Or right-click on the page and select **"Batch Download All Files"**.
-3. **Scan Resources**:
+3. **(Optional) Select Search Scope**:
+   - Click the settings icon (⚙️) to expand settings.
+   - Click **"选择范围"** (Select Scope) button.
+   - The popup will close and you can now hover over elements on the page.
+   - Use **↑** and **↓** arrow keys to switch between parent/child elements.
+   - Click on the desired element to confirm the selection.
+   - Press **ESC** to cancel the selection.
+4. **Scan Resources**:
    - In the popup panel, check the file types you need (e.g., Docs, Images).
    - Click the **"Scan for Files"** button.
-4. **Manage and Download**:
+5. **Manage and Download**:
    - After scanning, the list will show all found files.
    - You can uncheck unwanted files or click the `×` on the right to delete them.
    - You can modify filenames or set the download folder name at the top.
@@ -59,7 +67,8 @@ OmniFetch/
 ├── background/          # Background service script
 │   └── background.js
 ├── content/             # Content script (injected into page)
-│   └── content.js
+│   ├── content.js       # File scanning logic
+│   └── selector.js      # DOM element selector
 ├── popup/               # Popup UI
 │   ├── popup.html
 │   ├── popup.js
